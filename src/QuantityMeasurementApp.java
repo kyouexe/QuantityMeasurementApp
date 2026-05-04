@@ -67,57 +67,88 @@ class Quantity<U extends IMeasurable> {
         return unit.convertToBaseUnit(value);
     }
 
-    private void validate(Quantity<U> other) {
+    // ===== OPERATION ENUM =====
+    private enum Operation {
+        ADD((a,b)->a+b),
+        SUBTRACT((a,b)->a-b),
+        DIVIDE((a,b)->{
+            if(b==0) throw new ArithmeticException("Divide by zero");
+            return a/b;
+        });
+
+        private final java.util.function.DoubleBinaryOperator op;
+
+        Operation(java.util.function.DoubleBinaryOperator op) {
+            this.op = op;
+        }
+
+        double apply(double a, double b) {
+            return op.applyAsDouble(a,b);
+        }
+    }
+
+    // ===== VALIDATION =====
+    private void validate(Quantity<U> other, U target, boolean needTarget) {
         if (other == null)
             throw new IllegalArgumentException("Null quantity");
+
         if (!this.unit.getClass().equals(other.unit.getClass()))
             throw new IllegalArgumentException("Different categories");
+
+        if (!Double.isFinite(this.value) || !Double.isFinite(other.value))
+            throw new IllegalArgumentException("Invalid number");
+
+        if (needTarget && target == null)
+            throw new IllegalArgumentException("Target unit required");
+    }
+
+    // ===== CENTRAL HELPER =====
+    private double perform(Quantity<U> other, Operation op) {
+        double base1 = this.toBase();
+        double base2 = other.toBase();
+        return op.apply(base1, base2);
     }
 
     private double round(double v) {
         return Math.round(v * 100.0) / 100.0;
     }
 
-    // ===== CONVERT =====
-    public Quantity<U> convertTo(U targetUnit) {
-        double base = toBase();
-        return new Quantity<>(round(targetUnit.convertFromBaseUnit(base)), targetUnit);
-    }
-
     // ===== ADD =====
     public Quantity<U> add(Quantity<U> other) {
-        validate(other);
-        double sum = this.toBase() + other.toBase();
-        return new Quantity<>(round(unit.convertFromBaseUnit(sum)), unit);
+        validate(other, null, false);
+        double result = perform(other, Operation.ADD);
+        return new Quantity<>(round(unit.convertFromBaseUnit(result)), unit);
     }
 
     public Quantity<U> add(Quantity<U> other, U targetUnit) {
-        validate(other);
-        if (targetUnit == null) throw new IllegalArgumentException();
-        double sum = this.toBase() + other.toBase();
-        return new Quantity<>(round(targetUnit.convertFromBaseUnit(sum)), targetUnit);
+        validate(other, targetUnit, true);
+        double result = perform(other, Operation.ADD);
+        return new Quantity<>(round(targetUnit.convertFromBaseUnit(result)), targetUnit);
     }
 
     // ===== SUBTRACT =====
     public Quantity<U> subtract(Quantity<U> other) {
-        validate(other);
-        double diff = this.toBase() - other.toBase();
-        return new Quantity<>(round(unit.convertFromBaseUnit(diff)), unit);
+        validate(other, null, false);
+        double result = perform(other, Operation.SUBTRACT);
+        return new Quantity<>(round(unit.convertFromBaseUnit(result)), unit);
     }
 
     public Quantity<U> subtract(Quantity<U> other, U targetUnit) {
-        validate(other);
-        if (targetUnit == null) throw new IllegalArgumentException();
-        double diff = this.toBase() - other.toBase();
-        return new Quantity<>(round(targetUnit.convertFromBaseUnit(diff)), targetUnit);
+        validate(other, targetUnit, true);
+        double result = perform(other, Operation.SUBTRACT);
+        return new Quantity<>(round(targetUnit.convertFromBaseUnit(result)), targetUnit);
     }
 
     // ===== DIVIDE =====
     public double divide(Quantity<U> other) {
-        validate(other);
-        double divisor = other.toBase();
-        if (divisor == 0) throw new ArithmeticException("Divide by zero");
-        return this.toBase() / divisor;
+        validate(other, null, false);
+        return perform(other, Operation.DIVIDE);
+    }
+
+    // ===== CONVERT =====
+    public Quantity<U> convertTo(U targetUnit) {
+        double base = toBase();
+        return new Quantity<>(round(targetUnit.convertFromBaseUnit(base)), targetUnit);
     }
 
     // ===== EQUALS =====
@@ -142,24 +173,5 @@ class Quantity<U extends IMeasurable> {
     @Override
     public String toString() {
         return value + " " + unit.getUnitName();
-    }
-}
-
-// ===== APP =====
-public class QuantityMeasurementApp {
-
-    public static <U extends IMeasurable> Quantity<U> subtract(
-            Quantity<U> q1, Quantity<U> q2) {
-        return q1.subtract(q2);
-    }
-
-    public static <U extends IMeasurable> Quantity<U> subtract(
-            Quantity<U> q1, Quantity<U> q2, U unit) {
-        return q1.subtract(q2, unit);
-    }
-
-    public static <U extends IMeasurable> double divide(
-            Quantity<U> q1, Quantity<U> q2) {
-        return q1.divide(q2);
     }
 }
