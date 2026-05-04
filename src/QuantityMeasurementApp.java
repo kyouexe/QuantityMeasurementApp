@@ -1,130 +1,168 @@
 package com.apps.quantitymeasurement;
 
+// ===== INTERFACE =====
+interface IMeasurable {
+    double getConversionFactor();
+    double convertToBaseUnit(double value);
+    double convertFromBaseUnit(double baseValue);
+    String getUnitName();
+}
+
 // ===== LENGTH UNIT =====
-enum LengthUnit {
+enum LengthUnit implements IMeasurable {
     FEET(1.0),
     INCHES(1.0 / 12.0),
     YARDS(3.0),
     CENTIMETERS(1.0 / 30.48);
 
-    private final double toFeetFactor;
+    private final double factor;
 
-    LengthUnit(double toFeetFactor) {
-        this.toFeetFactor = toFeetFactor;
+    LengthUnit(double factor) {
+        this.factor = factor;
     }
 
-    public double toBase(double value) {
-        return value * toFeetFactor;
+    public double getConversionFactor() {
+        return factor;
     }
 
-    public double fromBase(double baseValue) {
-        return baseValue / toFeetFactor;
-    }
-}
-
-// ===== LENGTH CLASS =====
-class Length {
-    private final double value;
-    private final LengthUnit unit;
-
-    public Length(double value, LengthUnit unit) {
-        if (unit == null || !Double.isFinite(value)) {
-            throw new IllegalArgumentException();
-        }
-        this.value = value;
-        this.unit = unit;
+    public double convertToBaseUnit(double value) {
+        return value * factor;
     }
 
-    private double toBase() {
-        return unit.toBase(value);
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / factor;
     }
 
-    public Length convertTo(LengthUnit target) {
-        double base = toBase();
-        return new Length(target.fromBase(base), target);
-    }
-
-    public Length add(Length other) {
-        double sum = this.toBase() + other.toBase();
-        return new Length(unit.fromBase(sum), unit);
-    }
-
-    public Length add(Length other, LengthUnit target) {
-        double sum = this.toBase() + other.toBase();
-        return new Length(target.fromBase(sum), target);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof Length)) return false;
-        Length other = (Length) obj;
-        return Math.abs(this.toBase() - other.toBase()) < 0.0001;
+    public String getUnitName() {
+        return this.name();
     }
 }
 
 // ===== WEIGHT UNIT =====
-enum WeightUnit {
+enum WeightUnit implements IMeasurable {
     KILOGRAM(1.0),
     GRAM(0.001),
     POUND(0.453592);
 
-    private final double toKgFactor;
+    private final double factor;
 
-    WeightUnit(double toKgFactor) {
-        this.toKgFactor = toKgFactor;
+    WeightUnit(double factor) {
+        this.factor = factor;
     }
 
-    public double toBase(double value) {
-        return value * toKgFactor;
+    public double getConversionFactor() {
+        return factor;
     }
 
-    public double fromBase(double baseValue) {
-        return baseValue / toKgFactor;
+    public double convertToBaseUnit(double value) {
+        return value * factor;
+    }
+
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / factor;
+    }
+
+    public String getUnitName() {
+        return this.name();
     }
 }
 
-// ===== WEIGHT CLASS =====
-class Weight {
-    private final double value;
-    private final WeightUnit unit;
+// ===== GENERIC QUANTITY CLASS =====
+class Quantity<U extends IMeasurable> {
 
-    public Weight(double value, WeightUnit unit) {
+    private final double value;
+    private final U unit;
+
+    public Quantity(double value, U unit) {
         if (unit == null || !Double.isFinite(value)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Invalid input");
         }
         this.value = value;
         this.unit = unit;
     }
 
     private double toBase() {
-        return unit.toBase(value);
+        return unit.convertToBaseUnit(value);
     }
 
-    public Weight convertTo(WeightUnit target) {
+    public Quantity<U> convertTo(U targetUnit) {
+        if (targetUnit == null) throw new IllegalArgumentException();
+
         double base = toBase();
-        return new Weight(target.fromBase(base), target);
+        double converted = targetUnit.convertFromBaseUnit(base);
+
+        return new Quantity<>(round(converted), targetUnit);
     }
 
-    public Weight add(Weight other) {
+    public Quantity<U> add(Quantity<U> other) {
+        if (other == null) throw new IllegalArgumentException();
+
         double sum = this.toBase() + other.toBase();
-        return new Weight(unit.fromBase(sum), unit);
+        double result = this.unit.convertFromBaseUnit(sum);
+
+        return new Quantity<>(round(result), this.unit);
     }
 
-    public Weight add(Weight other, WeightUnit target) {
+    public Quantity<U> add(Quantity<U> other, U targetUnit) {
+        if (other == null || targetUnit == null) {
+            throw new IllegalArgumentException();
+        }
+
         double sum = this.toBase() + other.toBase();
-        return new Weight(target.fromBase(sum), target);
+        double result = targetUnit.convertFromBaseUnit(sum);
+
+        return new Quantity<>(round(result), targetUnit);
+    }
+
+    private double round(double val) {
+        return Math.round(val * 100.0) / 100.0;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof Weight)) return false;
-        Weight other = (Weight) obj;
+        if (!(obj instanceof Quantity<?>)) return false;
+
+        Quantity<?> other = (Quantity<?>) obj;
+
+        if (!this.unit.getClass().equals(other.unit.getClass())) {
+            return false; // prevents length vs weight
+        }
+
         return Math.abs(this.toBase() - other.toBase()) < 0.0001;
+    }
+
+    @Override
+    public int hashCode() {
+        return Double.hashCode(toBase());
+    }
+
+    @Override
+    public String toString() {
+        return value + " " + unit.getUnitName();
     }
 }
 
-// ===== MAIN APP =====
+// ===== APP =====
 public class QuantityMeasurementApp {
+
+    public static <U extends IMeasurable> boolean demonstrateEquality(
+            Quantity<U> q1, Quantity<U> q2) {
+        return q1.equals(q2);
+    }
+
+    public static <U extends IMeasurable> Quantity<U> demonstrateConversion(
+            Quantity<U> q, U targetUnit) {
+        return q.convertTo(targetUnit);
+    }
+
+    public static <U extends IMeasurable> Quantity<U> demonstrateAddition(
+            Quantity<U> q1, Quantity<U> q2) {
+        return q1.add(q2);
+    }
+
+    public static <U extends IMeasurable> Quantity<U> demonstrateAddition(
+            Quantity<U> q1, Quantity<U> q2, U targetUnit) {
+        return q1.add(q2, targetUnit);
+    }
 }
