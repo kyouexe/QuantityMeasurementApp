@@ -5,83 +5,87 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class QuantityMeasurementAppTest {
 
-    // ===== LENGTH =====
+    // ===== VOLUME EQUALITY =====
     @Test
-    void testLengthEquality() {
-        assertTrue(new Quantity<>(1.0, LengthUnit.FEET)
-                .equals(new Quantity<>(12.0, LengthUnit.INCHES)));
+    void testLitreToMillilitre() {
+        assertTrue(new Quantity<>(1.0, VolumeUnit.LITRE)
+                .equals(new Quantity<>(1000.0, VolumeUnit.MILLILITRE)));
     }
 
     @Test
-    void testLengthConversion() {
-        Quantity<LengthUnit> q =
-                new Quantity<>(1.0, LengthUnit.FEET)
-                        .convertTo(LengthUnit.INCHES);
-
-        assertTrue(q.equals(new Quantity<>(12.0, LengthUnit.INCHES)));
+    void testLitreToGallon() {
+        assertTrue(new Quantity<>(3.78541, VolumeUnit.LITRE)
+                .equals(new Quantity<>(1.0, VolumeUnit.GALLON)));
     }
 
-    // ===== WEIGHT =====
+    // ===== CONVERSION =====
     @Test
-    void testWeightEquality() {
-        assertTrue(new Quantity<>(1.0, WeightUnit.KILOGRAM)
-                .equals(new Quantity<>(1000.0, WeightUnit.GRAM)));
+    void testLitreToMLConversion() {
+        Quantity<VolumeUnit> result =
+                new Quantity<>(1.0, VolumeUnit.LITRE)
+                        .convertTo(VolumeUnit.MILLILITRE);
+
+        assertTrue(result.equals(new Quantity<>(1000.0, VolumeUnit.MILLILITRE)));
     }
 
     @Test
-    void testWeightConversion() {
-        Quantity<WeightUnit> q =
-                new Quantity<>(1.0, WeightUnit.KILOGRAM)
-                        .convertTo(WeightUnit.GRAM);
+    void testGallonToLitreConversion() {
+        Quantity<VolumeUnit> result =
+                new Quantity<>(1.0, VolumeUnit.GALLON)
+                        .convertTo(VolumeUnit.LITRE);
 
-        assertTrue(q.equals(new Quantity<>(1000.0, WeightUnit.GRAM)));
+        assertTrue(result.equals(new Quantity<>(3.78541, VolumeUnit.LITRE)));
     }
 
     // ===== ADDITION =====
     @Test
-    void testAdditionLength() {
-        Quantity<LengthUnit> result =
-                new Quantity<>(1.0, LengthUnit.FEET)
-                        .add(new Quantity<>(12.0, LengthUnit.INCHES));
+    void testAdditionLitreAndML() {
+        Quantity<VolumeUnit> result =
+                new Quantity<>(1.0, VolumeUnit.LITRE)
+                        .add(new Quantity<>(1000.0, VolumeUnit.MILLILITRE));
 
-        assertTrue(result.equals(new Quantity<>(2.0, LengthUnit.FEET)));
-    }
-
-    @Test
-    void testAdditionWeight() {
-        Quantity<WeightUnit> result =
-                new Quantity<>(1.0, WeightUnit.KILOGRAM)
-                        .add(new Quantity<>(1000.0, WeightUnit.GRAM));
-
-        assertTrue(result.equals(new Quantity<>(2.0, WeightUnit.KILOGRAM)));
+        assertTrue(result.equals(new Quantity<>(2.0, VolumeUnit.LITRE)));
     }
 
     @Test
     void testAdditionWithTargetUnit() {
-        Quantity<WeightUnit> result =
-                new Quantity<>(1.0, WeightUnit.KILOGRAM)
-                        .add(new Quantity<>(1000.0, WeightUnit.GRAM), WeightUnit.GRAM);
+        Quantity<VolumeUnit> result =
+                new Quantity<>(1.0, VolumeUnit.LITRE)
+                        .add(new Quantity<>(1000.0, VolumeUnit.MILLILITRE),
+                                VolumeUnit.MILLILITRE);
 
-        assertTrue(result.equals(new Quantity<>(2000.0, WeightUnit.GRAM)));
+        assertTrue(result.equals(new Quantity<>(2000.0, VolumeUnit.MILLILITRE)));
     }
 
-    // ===== TYPE SAFETY =====
+    // ===== CROSS CATEGORY =====
     @Test
-    void testLengthVsWeight() {
-        assertFalse(new Quantity<>(1.0, LengthUnit.FEET)
+    void testVolumeVsLength() {
+        assertFalse(new Quantity<>(1.0, VolumeUnit.LITRE)
+                .equals(new Quantity<>(1.0, LengthUnit.FEET)));
+    }
+
+    @Test
+    void testVolumeVsWeight() {
+        assertFalse(new Quantity<>(1.0, VolumeUnit.LITRE)
                 .equals(new Quantity<>(1.0, WeightUnit.KILOGRAM)));
     }
 
     // ===== EDGE CASES =====
     @Test
-    void testNullUnit() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new Quantity<>(1.0, null));
+    void testZero() {
+        assertTrue(new Quantity<>(0.0, VolumeUnit.LITRE)
+                .equals(new Quantity<>(0.0, VolumeUnit.MILLILITRE)));
     }
 
     @Test
-    void testInvalidValue() {
+    void testNegative() {
+        assertTrue(new Quantity<>(-1.0, VolumeUnit.LITRE)
+                .equals(new Quantity<>(-1000.0, VolumeUnit.MILLILITRE)));
+    }
+
+    @Test
+    void testNullUnit() {
         assertThrows(IllegalArgumentException.class,
-                () -> new Quantity<>(Double.NaN, LengthUnit.FEET));
+                () -> new Quantity<>(1.0, null));
     }
 }

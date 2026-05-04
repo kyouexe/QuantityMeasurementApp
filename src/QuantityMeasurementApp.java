@@ -21,21 +21,10 @@ enum LengthUnit implements IMeasurable {
         this.factor = factor;
     }
 
-    public double getConversionFactor() {
-        return factor;
-    }
-
-    public double convertToBaseUnit(double value) {
-        return value * factor;
-    }
-
-    public double convertFromBaseUnit(double baseValue) {
-        return baseValue / factor;
-    }
-
-    public String getUnitName() {
-        return this.name();
-    }
+    public double getConversionFactor() { return factor; }
+    public double convertToBaseUnit(double value) { return value * factor; }
+    public double convertFromBaseUnit(double baseValue) { return baseValue / factor; }
+    public String getUnitName() { return name(); }
 }
 
 // ===== WEIGHT UNIT =====
@@ -50,24 +39,31 @@ enum WeightUnit implements IMeasurable {
         this.factor = factor;
     }
 
-    public double getConversionFactor() {
-        return factor;
-    }
-
-    public double convertToBaseUnit(double value) {
-        return value * factor;
-    }
-
-    public double convertFromBaseUnit(double baseValue) {
-        return baseValue / factor;
-    }
-
-    public String getUnitName() {
-        return this.name();
-    }
+    public double getConversionFactor() { return factor; }
+    public double convertToBaseUnit(double value) { return value * factor; }
+    public double convertFromBaseUnit(double baseValue) { return baseValue / factor; }
+    public String getUnitName() { return name(); }
 }
 
-// ===== GENERIC QUANTITY CLASS =====
+// ===== NEW: VOLUME UNIT =====
+enum VolumeUnit implements IMeasurable {
+    LITRE(1.0),
+    MILLILITRE(0.001),
+    GALLON(3.78541);
+
+    private final double factor;
+
+    VolumeUnit(double factor) {
+        this.factor = factor;
+    }
+
+    public double getConversionFactor() { return factor; }
+    public double convertToBaseUnit(double value) { return value * factor; }
+    public double convertFromBaseUnit(double baseValue) { return baseValue / factor; }
+    public String getUnitName() { return name(); }
+}
+
+// ===== GENERIC QUANTITY =====
 class Quantity<U extends IMeasurable> {
 
     private final double value;
@@ -86,36 +82,23 @@ class Quantity<U extends IMeasurable> {
     }
 
     public Quantity<U> convertTo(U targetUnit) {
-        if (targetUnit == null) throw new IllegalArgumentException();
-
         double base = toBase();
-        double converted = targetUnit.convertFromBaseUnit(base);
-
-        return new Quantity<>(round(converted), targetUnit);
-    }
-
-    public Quantity<U> add(Quantity<U> other) {
-        if (other == null) throw new IllegalArgumentException();
-
-        double sum = this.toBase() + other.toBase();
-        double result = this.unit.convertFromBaseUnit(sum);
-
-        return new Quantity<>(round(result), this.unit);
-    }
-
-    public Quantity<U> add(Quantity<U> other, U targetUnit) {
-        if (other == null || targetUnit == null) {
-            throw new IllegalArgumentException();
-        }
-
-        double sum = this.toBase() + other.toBase();
-        double result = targetUnit.convertFromBaseUnit(sum);
-
+        double result = targetUnit.convertFromBaseUnit(base);
         return new Quantity<>(round(result), targetUnit);
     }
 
-    private double round(double val) {
-        return Math.round(val * 100.0) / 100.0;
+    public Quantity<U> add(Quantity<U> other) {
+        double sum = this.toBase() + other.toBase();
+        return new Quantity<>(round(unit.convertFromBaseUnit(sum)), unit);
+    }
+
+    public Quantity<U> add(Quantity<U> other, U targetUnit) {
+        double sum = this.toBase() + other.toBase();
+        return new Quantity<>(round(targetUnit.convertFromBaseUnit(sum)), targetUnit);
+    }
+
+    private double round(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 
     @Override
@@ -126,7 +109,7 @@ class Quantity<U extends IMeasurable> {
         Quantity<?> other = (Quantity<?>) obj;
 
         if (!this.unit.getClass().equals(other.unit.getClass())) {
-            return false; // prevents length vs weight
+            return false;
         }
 
         return Math.abs(this.toBase() - other.toBase()) < 0.0001;
