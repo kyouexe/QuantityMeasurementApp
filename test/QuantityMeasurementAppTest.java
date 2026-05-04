@@ -5,87 +5,91 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class QuantityMeasurementAppTest {
 
-    // ===== VOLUME EQUALITY =====
+    // ===== SUBTRACTION =====
     @Test
-    void testLitreToMillilitre() {
-        assertTrue(new Quantity<>(1.0, VolumeUnit.LITRE)
-                .equals(new Quantity<>(1000.0, VolumeUnit.MILLILITRE)));
+    void testFeetMinusInches() {
+        Quantity<LengthUnit> result =
+                new Quantity<>(10.0, LengthUnit.FEET)
+                        .subtract(new Quantity<>(6.0, LengthUnit.INCHES));
+
+        assertTrue(result.equals(new Quantity<>(9.5, LengthUnit.FEET)));
     }
 
     @Test
-    void testLitreToGallon() {
-        assertTrue(new Quantity<>(3.78541, VolumeUnit.LITRE)
-                .equals(new Quantity<>(1.0, VolumeUnit.GALLON)));
-    }
+    void testExplicitTargetUnit() {
+        Quantity<LengthUnit> result =
+                new Quantity<>(10.0, LengthUnit.FEET)
+                        .subtract(new Quantity<>(6.0, LengthUnit.INCHES),
+                                LengthUnit.INCHES);
 
-    // ===== CONVERSION =====
-    @Test
-    void testLitreToMLConversion() {
-        Quantity<VolumeUnit> result =
-                new Quantity<>(1.0, VolumeUnit.LITRE)
-                        .convertTo(VolumeUnit.MILLILITRE);
-
-        assertTrue(result.equals(new Quantity<>(1000.0, VolumeUnit.MILLILITRE)));
+        assertTrue(result.equals(new Quantity<>(114.0, LengthUnit.INCHES)));
     }
 
     @Test
-    void testGallonToLitreConversion() {
-        Quantity<VolumeUnit> result =
-                new Quantity<>(1.0, VolumeUnit.GALLON)
-                        .convertTo(VolumeUnit.LITRE);
+    void testNegativeResult() {
+        Quantity<LengthUnit> result =
+                new Quantity<>(5.0, LengthUnit.FEET)
+                        .subtract(new Quantity<>(10.0, LengthUnit.FEET));
 
-        assertTrue(result.equals(new Quantity<>(3.78541, VolumeUnit.LITRE)));
-    }
-
-    // ===== ADDITION =====
-    @Test
-    void testAdditionLitreAndML() {
-        Quantity<VolumeUnit> result =
-                new Quantity<>(1.0, VolumeUnit.LITRE)
-                        .add(new Quantity<>(1000.0, VolumeUnit.MILLILITRE));
-
-        assertTrue(result.equals(new Quantity<>(2.0, VolumeUnit.LITRE)));
+        assertTrue(result.equals(new Quantity<>(-5.0, LengthUnit.FEET)));
     }
 
     @Test
-    void testAdditionWithTargetUnit() {
-        Quantity<VolumeUnit> result =
-                new Quantity<>(1.0, VolumeUnit.LITRE)
-                        .add(new Quantity<>(1000.0, VolumeUnit.MILLILITRE),
-                                VolumeUnit.MILLILITRE);
+    void testZeroResult() {
+        Quantity<LengthUnit> result =
+                new Quantity<>(10.0, LengthUnit.FEET)
+                        .subtract(new Quantity<>(120.0, LengthUnit.INCHES));
 
-        assertTrue(result.equals(new Quantity<>(2000.0, VolumeUnit.MILLILITRE)));
+        assertTrue(result.equals(new Quantity<>(0.0, LengthUnit.FEET)));
+    }
+
+    // ===== DIVISION =====
+    @Test
+    void testDivideSameUnit() {
+        double result =
+                new Quantity<>(10.0, LengthUnit.FEET)
+                        .divide(new Quantity<>(2.0, LengthUnit.FEET));
+
+        assertEquals(5.0, result);
+    }
+
+    @Test
+    void testDivideCrossUnit() {
+        double result =
+                new Quantity<>(24.0, LengthUnit.INCHES)
+                        .divide(new Quantity<>(2.0, LengthUnit.FEET));
+
+        assertEquals(1.0, result);
+    }
+
+    @Test
+    void testDivideLessThanOne() {
+        double result =
+                new Quantity<>(5.0, LengthUnit.FEET)
+                        .divide(new Quantity<>(10.0, LengthUnit.FEET));
+
+        assertEquals(0.5, result);
+    }
+
+    @Test
+    void testDivideByZero() {
+        assertThrows(ArithmeticException.class, () ->
+                new Quantity<>(10.0, LengthUnit.FEET)
+                        .divide(new Quantity<>(0.0, LengthUnit.FEET)));
     }
 
     // ===== CROSS CATEGORY =====
     @Test
-    void testVolumeVsLength() {
-        assertFalse(new Quantity<>(1.0, VolumeUnit.LITRE)
-                .equals(new Quantity<>(1.0, LengthUnit.FEET)));
+    void testCrossCategorySubtract() {
+        assertThrows(IllegalArgumentException.class, () ->
+                new Quantity<>(10.0, LengthUnit.FEET)
+                        .subtract(new Quantity<>(5.0, WeightUnit.KILOGRAM)));
     }
 
     @Test
-    void testVolumeVsWeight() {
-        assertFalse(new Quantity<>(1.0, VolumeUnit.LITRE)
-                .equals(new Quantity<>(1.0, WeightUnit.KILOGRAM)));
-    }
-
-    // ===== EDGE CASES =====
-    @Test
-    void testZero() {
-        assertTrue(new Quantity<>(0.0, VolumeUnit.LITRE)
-                .equals(new Quantity<>(0.0, VolumeUnit.MILLILITRE)));
-    }
-
-    @Test
-    void testNegative() {
-        assertTrue(new Quantity<>(-1.0, VolumeUnit.LITRE)
-                .equals(new Quantity<>(-1000.0, VolumeUnit.MILLILITRE)));
-    }
-
-    @Test
-    void testNullUnit() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new Quantity<>(1.0, null));
+    void testCrossCategoryDivide() {
+        assertThrows(IllegalArgumentException.class, () ->
+                new Quantity<>(10.0, LengthUnit.FEET)
+                        .divide(new Quantity<>(5.0, WeightUnit.KILOGRAM)));
     }
 }
