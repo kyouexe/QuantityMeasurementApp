@@ -4,62 +4,87 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.apps.quantitymeasurement.QuantityMeasurementApp.Feet;
+import com.apps.quantitymeasurement.QuantityMeasurementApp.Inches;
 
 public class QuantityMeasurementAppTest {
 
-    /**
-     * testEquality_SameValue
-     * Given two same values (1.0, 1.0)
-     * When compared
-     * Then should return true
-     */
+    // -------- FEET TESTS --------
+
     @Test
     public void testFeetEquality_SameValue() {
         Feet f1 = new Feet(1.0);
         Feet f2 = new Feet(1.0);
 
-        assertTrue(f1.equals(f2), "Expected values to be equal");
+        assertTrue(f1.equals(f2));
     }
 
-    /**
-     * testEquality_DifferentValue
-     */
     @Test
     public void testFeetEquality_DifferentValue() {
         Feet f1 = new Feet(1.0);
         Feet f2 = new Feet(2.0);
 
-        assertFalse(f1.equals(f2), "Expected values to be NOT equal");
+        assertFalse(f1.equals(f2));
     }
 
-    /**
-     * testEquality_NullComparison
-     */
     @Test
     public void testFeetEquality_NullComparison() {
         Feet f1 = new Feet(1.0);
 
-        assertFalse(f1.equals(null), "Expected comparison with null to be false");
+        assertFalse(f1.equals(null));
     }
 
-    /**
-     * testEquality_DifferentClass (Non-numeric input simulation)
-     */
     @Test
     public void testFeetEquality_DifferentClass() {
         Feet f1 = new Feet(1.0);
-        String nonNumeric = "1.0";
+        String str = "1.0";
 
-        assertFalse(f1.equals(nonNumeric), "Expected different type comparison to be false");
+        assertFalse(f1.equals(str));
     }
 
-    /**
-     * testEquality_SameReference (Reflexive property)
-     */
     @Test
     public void testFeetEquality_SameReference() {
         Feet f1 = new Feet(1.0);
 
-        assertTrue(f1.equals(f1), "Expected object to be equal to itself");
+        assertTrue(f1.equals(f1));
+    }
+
+    // -------- INCHES TESTS --------
+
+    @Test
+    public void testInchesEquality_SameValue() {
+        Inches i1 = new Inches(1.0);
+        Inches i2 = new Inches(1.0);
+
+        assertTrue(i1.equals(i2));
+    }
+
+    @Test
+    public void testInchesEquality_DifferentValue() {
+        Inches i1 = new Inches(1.0);
+        Inches i2 = new Inches(2.0);
+
+        assertFalse(i1.equals(i2));
+    }
+
+    @Test
+    public void testInchesEquality_NullComparison() {
+        Inches i1 = new Inches(1.0);
+
+        assertFalse(i1.equals(null));
+    }
+
+    @Test
+    public void testInchesEquality_DifferentClass() {
+        Inches i1 = new Inches(1.0);
+        Integer num = 1;
+
+        assertFalse(i1.equals(num));
+    }
+
+    @Test
+    public void testInchesEquality_SameReference() {
+        Inches i1 = new Inches(1.0);
+
+        assertTrue(i1.equals(i1));
     }
 }
