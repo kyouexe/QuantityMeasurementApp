@@ -1,70 +1,130 @@
 package com.apps.quantitymeasurement;
 
-public class Length {
+// ===== LENGTH UNIT =====
+enum LengthUnit {
+    FEET(1.0),
+    INCHES(1.0 / 12.0),
+    YARDS(3.0),
+    CENTIMETERS(1.0 / 30.48);
 
-    private double value;
-    private LengthUnit unit;
+    private final double toFeetFactor;
+
+    LengthUnit(double toFeetFactor) {
+        this.toFeetFactor = toFeetFactor;
+    }
+
+    public double toBase(double value) {
+        return value * toFeetFactor;
+    }
+
+    public double fromBase(double baseValue) {
+        return baseValue / toFeetFactor;
+    }
+}
+
+// ===== LENGTH CLASS =====
+class Length {
+    private final double value;
+    private final LengthUnit unit;
 
     public Length(double value, LengthUnit unit) {
         if (unit == null || !Double.isFinite(value)) {
-            throw new IllegalArgumentException("Invalid input");
+            throw new IllegalArgumentException();
         }
         this.value = value;
         this.unit = unit;
     }
 
-    private double toBaseUnit() {
-        return unit.convertToBaseUnit(value);
+    private double toBase() {
+        return unit.toBase(value);
     }
 
-    public Length convertTo(LengthUnit targetUnit) {
-        if (targetUnit == null) {
-            throw new IllegalArgumentException("Target unit cannot be null");
-        }
-
-        double base = this.toBaseUnit();
-        double converted = targetUnit.convertFromBaseUnit(base);
-
-        return new Length(round(converted), targetUnit);
+    public Length convertTo(LengthUnit target) {
+        double base = toBase();
+        return new Length(target.fromBase(base), target);
     }
 
-    // UC6
     public Length add(Length other) {
-        if (other == null) throw new IllegalArgumentException("Null length");
-
-        double sumBase = this.toBaseUnit() + other.toBaseUnit();
-        double result = this.unit.convertFromBaseUnit(sumBase);
-
-        return new Length(round(result), this.unit);
+        double sum = this.toBase() + other.toBase();
+        return new Length(unit.fromBase(sum), unit);
     }
 
-    // UC7
-    public Length add(Length other, LengthUnit targetUnit) {
-        if (other == null || targetUnit == null) {
-            throw new IllegalArgumentException("Invalid input");
+    public Length add(Length other, LengthUnit target) {
+        double sum = this.toBase() + other.toBase();
+        return new Length(target.fromBase(sum), target);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Length)) return false;
+        Length other = (Length) obj;
+        return Math.abs(this.toBase() - other.toBase()) < 0.0001;
+    }
+}
+
+// ===== WEIGHT UNIT =====
+enum WeightUnit {
+    KILOGRAM(1.0),
+    GRAM(0.001),
+    POUND(0.453592);
+
+    private final double toKgFactor;
+
+    WeightUnit(double toKgFactor) {
+        this.toKgFactor = toKgFactor;
+    }
+
+    public double toBase(double value) {
+        return value * toKgFactor;
+    }
+
+    public double fromBase(double baseValue) {
+        return baseValue / toKgFactor;
+    }
+}
+
+// ===== WEIGHT CLASS =====
+class Weight {
+    private final double value;
+    private final WeightUnit unit;
+
+    public Weight(double value, WeightUnit unit) {
+        if (unit == null || !Double.isFinite(value)) {
+            throw new IllegalArgumentException();
         }
-
-        double sumBase = this.toBaseUnit() + other.toBaseUnit();
-        double result = targetUnit.convertFromBaseUnit(sumBase);
-
-        return new Length(round(result), targetUnit);
+        this.value = value;
+        this.unit = unit;
     }
 
-    private double round(double val) {
-        return Math.round(val * 100.0) / 100.0;
+    private double toBase() {
+        return unit.toBase(value);
+    }
+
+    public Weight convertTo(WeightUnit target) {
+        double base = toBase();
+        return new Weight(target.fromBase(base), target);
+    }
+
+    public Weight add(Weight other) {
+        double sum = this.toBase() + other.toBase();
+        return new Weight(unit.fromBase(sum), unit);
+    }
+
+    public Weight add(Weight other, WeightUnit target) {
+        double sum = this.toBase() + other.toBase();
+        return new Weight(target.fromBase(sum), target);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Length)) return false;
-
-        Length other = (Length) o;
-        return Math.abs(this.toBaseUnit() - other.toBaseUnit()) < 0.01;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Weight)) return false;
+        Weight other = (Weight) obj;
+        return Math.abs(this.toBase() - other.toBase()) < 0.0001;
     }
+}
 
-    @Override
-    public String toString() {
-        return value + " " + unit;
-    }
+// ===== MAIN APP =====
+public class QuantityMeasurementApp {
 }
