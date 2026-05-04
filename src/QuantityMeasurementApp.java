@@ -1,31 +1,70 @@
 package com.apps.quantitymeasurement;
 
-public class QuantityMeasurementApp {
+public class Length {
 
-    public static boolean demonstrateLengthEquality(Length l1, Length l2) {
-        return l1.equals(l2);
+    private double value;
+    private LengthUnit unit;
+
+    public Length(double value, LengthUnit unit) {
+        if (unit == null || !Double.isFinite(value)) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+        this.value = value;
+        this.unit = unit;
     }
 
-    public static Length demonstrateLengthConversion(double value,
-                                                     Length.LengthUnit from,
-                                                     Length.LengthUnit to) {
-        return new Length(value, from).convertTo(to);
+    private double toBaseUnit() {
+        return unit.convertToBaseUnit(value);
     }
 
-    public static Length demonstrateLengthConversion(Length length,
-                                                     Length.LengthUnit to) {
-        return length.convertTo(to);
+    public Length convertTo(LengthUnit targetUnit) {
+        if (targetUnit == null) {
+            throw new IllegalArgumentException("Target unit cannot be null");
+        }
+
+        double base = this.toBaseUnit();
+        double converted = targetUnit.convertFromBaseUnit(base);
+
+        return new Length(round(converted), targetUnit);
     }
 
     // UC6
-    public static Length demonstrateLengthAddition(Length l1, Length l2) {
-        return l1.add(l2);
+    public Length add(Length other) {
+        if (other == null) throw new IllegalArgumentException("Null length");
+
+        double sumBase = this.toBaseUnit() + other.toBaseUnit();
+        double result = this.unit.convertFromBaseUnit(sumBase);
+
+        return new Length(round(result), this.unit);
     }
 
-    // UC7 (NEW)
-    public static Length demonstrateLengthAddition(Length l1,
-                                                   Length l2,
-                                                   Length.LengthUnit targetUnit) {
-        return l1.add(l2, targetUnit);
+    // UC7
+    public Length add(Length other, LengthUnit targetUnit) {
+        if (other == null || targetUnit == null) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+
+        double sumBase = this.toBaseUnit() + other.toBaseUnit();
+        double result = targetUnit.convertFromBaseUnit(sumBase);
+
+        return new Length(round(result), targetUnit);
+    }
+
+    private double round(double val) {
+        return Math.round(val * 100.0) / 100.0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Length)) return false;
+
+        Length other = (Length) o;
+        return Math.abs(this.toBaseUnit() - other.toBaseUnit()) < 0.01;
+    }
+
+    @Override
+    public String toString() {
+        return value + " " + unit;
     }
 }
